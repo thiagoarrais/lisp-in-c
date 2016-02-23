@@ -1,2 +1,2 @@
 # lisp-in-c
-An LISP implementation in C
+A LISP implementation in C
