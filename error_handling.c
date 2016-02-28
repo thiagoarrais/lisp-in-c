@@ -71,14 +71,16 @@ lval eval_op(lval x, char* op, lval y) {
   }
 
   if (strcmp(op, "+") == 0) {
-    if (x.type == y.type && x.type == LVAL_NUM) {
-      return lval_num(x.num + y.num);
+    if (x.type == y.type ) {
+      if (x.type == LVAL_NUM) {
+        return lval_num(x.num + y.num);
+      } else {
+        return lval_double(x.numd + y.numd);
+      }
     } else if (x.type == LVAL_DOUBLE) {
       return lval_double(x.numd + y.num);
     } else if (y.type == LVAL_DOUBLE) {
       return lval_double(x.num + y.numd);
-    } else {
-      return lval_num(x.num + y.num);
     }
   }
   if (strcmp(op, "-") == 0) {
@@ -131,7 +133,6 @@ lval eval(mpc_ast_t* t) {
 
 int main(int argc, char** argv) {
   mpc_parser_t* Number = mpc_new("number");
-  mpc_parser_t* Double = mpc_new("double");
   mpc_parser_t* Operator = mpc_new("operator");
   mpc_parser_t* Expr = mpc_new("expr");
   mpc_parser_t* Lispy = mpc_new("lispy");
@@ -143,7 +144,7 @@ int main(int argc, char** argv) {
       expr     : <number> | '(' <operator> <expr>+ ')' ;  \
       lispy    : /^/ <operator> <expr>+ /$/ ;             \
     ",
-    Double, Number, Operator, Expr, Lispy);
+    Number, Operator, Expr, Lispy);
 
   puts("Lispy Version 0.0.0.0.4");
   puts("Press Ctrl+c to Exit \n");
@@ -165,7 +166,7 @@ int main(int argc, char** argv) {
     free(input);
   }
 
-  mpc_cleanup(5, Double, Number, Operator, Expr, Lispy);
+  mpc_cleanup(4, Number, Operator, Expr, Lispy);
 
   return 0;
 }
