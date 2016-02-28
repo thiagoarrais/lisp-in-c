@@ -9,22 +9,24 @@ enum { LVAL_NUM, LVAL_DOUBLE, LVAL_ERR };
 
 typedef struct {
   int type;
-  long num;
-  double numd;
+  union {
+    long l;
+    double d;
+  };
   int err;
 } lval;
 
 lval lval_double(double x) {
   lval v;
   v.type = LVAL_DOUBLE;
-  v.numd = x;
+  v.d = x;
   return v;
 }
 
 lval lval_num(long x) {
   lval v;
   v.type = LVAL_NUM;
-  v.num = x;
+  v.l = x;
   return v;
 }
 
@@ -38,10 +40,10 @@ lval lval_err(long x) {
 void lval_print(lval v) {
   switch (v.type) {
     case LVAL_DOUBLE:
-      printf("%f", v.numd);
+      printf("%f", v.d);
       break;
     case LVAL_NUM:
-      printf("%li", v.num);
+      printf("%li", v.l);
       break;
     case LVAL_ERR:
       if (v.err == LERR_DIV_ZERO) {
@@ -71,38 +73,72 @@ lval eval_op(lval x, char* op, lval y) {
   }
 
   if (strcmp(op, "+") == 0) {
-    if (x.type == y.type ) {
+    if (x.type == y.type) {
       if (x.type == LVAL_NUM) {
-        return lval_num(x.num + y.num);
+        return lval_num(x.l + y.l);
       } else {
-        return lval_double(x.numd + y.numd);
+        return lval_double(x.d + y.d);
       }
     } else if (x.type == LVAL_DOUBLE) {
-      return lval_double(x.numd + y.num);
+      return lval_double(x.d + y.l);
     } else if (y.type == LVAL_DOUBLE) {
-      return lval_double(x.num + y.numd);
+      return lval_double(x.l + y.d);
     }
   }
   if (strcmp(op, "-") == 0) {
-    return lval_num(x.num - y.num);
-  }
-  if (strcmp(op, "*") == 0) {
-    return lval_num(x.num * y.num);
-  }
-  if (strcmp(op, "/") == 0) {
-    if (y.num == 0) {
-      return lval_err(LERR_DIV_ZERO);
-    } else {
-      return lval_num(x.num / y.num);
+    if (x.type == y.type) {
+      if (x.type == LVAL_NUM) {
+        return lval_num(x.l - y.l);
+      } else {
+        return lval_double(x.d - y.d);
+      }
+    } else if (x.type == LVAL_DOUBLE) {
+      return lval_double(x.d - y.l);
+    } else if (y.type == LVAL_DOUBLE) {
+      return lval_double(x.l - y.d);
     }
   }
-  /* if (strcmp(op, "%") == 0) { */
-  /*   if (y.num == 0) { */
-  /*     return lval_err(LERR_DIV_ZERO); */
-  /*   } else { */
-  /*     return lval_num(x.num % y.num); */
-  /*   } */
-  /* } */
+  if (strcmp(op, "*") == 0) {
+    if (x.type == y.type) {
+      if (x.type == LVAL_NUM) {
+        return lval_num(x.l * y.l);
+      } else {
+        return lval_double(x.d * y.d);
+      }
+    } else if (x.type == LVAL_DOUBLE) {
+      return lval_double(x.d * y.l);
+    } else if (y.type == LVAL_DOUBLE) {
+      return lval_double(x.l * y.d);
+    }
+  }
+  if (strcmp(op, "/") == 0) {
+    if ((y.type == LVAL_NUM && y.l == 0) || (y.type == LVAL_DOUBLE && y.d == 0)) {
+      return lval_err(LERR_DIV_ZERO);
+    } else {
+      if (x.type == y.type) {
+        if (x.type == LVAL_NUM) {
+          return lval_num(x.l / y.l);
+        } else {
+          return lval_double(x.d / y.d);
+        }
+      } else if (x.type == LVAL_DOUBLE) {
+        return lval_double(x.d / y.l);
+      } else if (y.type == LVAL_DOUBLE) {
+        return lval_double(x.l / y.d);
+      }
+    }
+  }
+  if (strcmp(op, "%") == 0) {
+    if (! (x.type == LVAL_NUM && y.type == LVAL_NUM)) {
+      return lval_err(LERR_BAD_OP);
+    } else {
+      if (y.l == 0) {
+        return lval_err(LERR_DIV_ZERO);
+      } else {
+        return lval_num(x.l % y.l);
+      }
+    }
+  }
 
   return lval_err(LERR_BAD_OP);
 }
