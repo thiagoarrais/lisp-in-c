@@ -179,7 +179,7 @@ lval* builtin_eval(lval* v) {
 
   lval* x = lval_take(v, 0);
   x->type = LVAL_SEXPR;
-  return x;
+  return lval_eval(x);
 }
 
 lval* builtin_join(lval *v) {
@@ -261,18 +261,18 @@ lval* builtin(lval* v, char* func) {
 
 lval* lval_eval_sexpr(lval* v) {
   for (int i = 0; i < v->count; i++) {
+    v->cell[i] = lval_eval(v->cell[i]);
+  }
+
+  for (int i = 0; i < v->count; i++) {
     if (v->cell[i]->type == LVAL_ERR) {
       return lval_take(v, i);
     }
   }
 
-  if (v->count == 0) {
-    return v;
-  }
+  if (v->count == 0) { return v; }
 
-  if (v->count == 1) {
-    return lval_take(v, 0);
-  }
+  if (v->count == 1) { return lval_take(v, 0); }
 
   lval* f = lval_pop(v, 0);
   if (f->type != LVAL_SYM) {
