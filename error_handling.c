@@ -2,6 +2,7 @@
 
 #include <editline/readline.h>
 
+
 /* Enum of possible Error Types */
 enum { LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM };
 
